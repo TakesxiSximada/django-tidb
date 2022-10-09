@@ -82,6 +82,10 @@ class DatabaseSchemaEditor(MysqlDatabaseSchemaEditor):
                     self._create_fk_sql(model, field, constraint_suffix)
                 )
 
+        is_unique_constraint = 'UNIQUE' in definition
+        if is_unique_constraint:
+            definition = definition.replace('UNIQUE', '')
+
         # Build the SQL and run it
         sql = self.sql_create_column % {
             "table": self.quote_name(model._meta.db_table),
@@ -89,6 +93,9 @@ class DatabaseSchemaEditor(MysqlDatabaseSchemaEditor):
             "definition": definition,
         }
         self.execute(sql, params)
+
+        if is_unique_constraint:
+            self.execute(self._create_unique_sql(model, [field.column]), params)
 
         # Drop the default if we need to
         # (Django usually does not use in-database defaults)

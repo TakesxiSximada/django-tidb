@@ -86,6 +86,13 @@ class DatabaseSchemaEditor(MysqlDatabaseSchemaEditor):
         if is_unique_constraint:
             definition = definition.replace('UNIQUE', '')
 
+        is_contain_default_statement = 'DEFAULT (%s)' in definition
+        if is_contain_default_statement:
+            definition = definition.replace('DEFAULT (%s)', '')
+            if len(params) > 1:
+                raise ValueError("Cannot detected collect migration")
+            params = []
+
         # Build the SQL and run it
         sql = self.sql_create_column % {
             "table": self.quote_name(model._meta.db_table),
